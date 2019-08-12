@@ -51,8 +51,7 @@ func eightxeight(pixels [][]float32) []float32 {
 		//Transform H into orthogonal matrix-> Inverse is faster
 		//Normalize each colmn of the starting matrix to length 1
 	}
-	field := zigZag(blocks)
-	return field
+	return nil
 }
 
 func createBlocks(x int, y int) [][][][]float32 {
