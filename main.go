@@ -27,7 +27,8 @@ func main() {
 	//Parse command line arguments
 	command := input.Read()
 	pixels := binaryIo.Bitmapr(command.Bmp)
-	fmt.Println(len(pixels) , "x", len(pixels[0]))
+	text := binaryIo.Textr(command.Message)
+	fmt.Println(len(pixels) , "x", len(pixels[0]), " TEXT : " , len(text))
 
 }
 
