@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"infoObfuscation/binaryIo"
-	"infoObfuscation/input"
+	"github.com/infoObfuscation/binaryIo"
+	"github.com/infoObfuscation/input"
 )
 
 /*
