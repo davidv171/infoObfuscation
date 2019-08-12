@@ -11,7 +11,7 @@ Second run: depth = 4 -> append last 4 elements without calculaitng anything
 Third run depth = 6, append last 6 elements without calculating anything
 number of runs is decided by log2(8) -> we're dealing with 8 sized rows/columns
 */
-func haar(input []float32, thr float32, depth int) []float32 {
+func haar(input []float32, depth int) []float32 {
 	//Sums and subtraction array, later we append subtract to the sums
 	sums := make([]float32, 0, len(input)/2)
 	subtr := make([]float32, 0, len(input)/2)
@@ -26,12 +26,6 @@ func haar(input []float32, thr float32, depth int) []float32 {
 			sum *= sqrt
 			var sub = (input[i-1] - input[i]) / 2
 			sub *= sqrt
-			if sum < thr {
-				sum = 0
-			}
-			if sub < thr {
-				sub = 0
-			}
 			//Round to 4 decimals
 			sums = append(sums, float32(math.Round(float64(sum*10000))/10000))
 			subtr = append(subtr, float32(math.Round(float64(sub*10000)/10000)))
@@ -44,9 +38,9 @@ func haar(input []float32, thr float32, depth int) []float32 {
 	//Ugly as shit recursion, please FIXME
 	switch depth {
 	case 0:
-		return haar(rowhaar, thr, 4)
+		return haar(rowhaar, 4)
 	case 4:
-		return haar(rowhaar, thr, 6)
+		return haar(rowhaar, 6)
 	case 6:
 		return rowhaar
 	default:
@@ -54,17 +48,17 @@ func haar(input []float32, thr float32, depth int) []float32 {
 	}
 }
 
-func blocksT(block [][]float32, thr float32) [][]float32 {
+func blocksT(block [][]float32) [][]float32 {
 	transformedBlock := make([][]float32, 8, 8)
 	for i := 0; i < 8; i++ {
-		transformedBlock[i] = haar(getRow(block, i), thr, 0)
+		transformedBlock[i] = haar(getRow(block, i), 0)
 	}
 	//Transform blocks after, used the already transformed matrix...
 	for i := 0; i < 8; i++ {
 		//Get column as a row-> insert it as a column
 		currColumn := getColumn(transformedBlock, i)
 		for j := 0; j < 8; j++ {
-			transformedBlock[j][i] = haar(currColumn, thr, 0)[j]
+			transformedBlock[j][i] = haar(currColumn, 0)[j]
 		}
 	}
 	//Transpose it because I have low iq

@@ -1,50 +1,58 @@
 package main
 
-import "fmt"
-
 /*
    Turn bitmap into 8x8 blocks
 */
-func EightxEight(pixels [][]float32) [][][][]float32 {
+func eightxeight(pixels [][]float32) []float32 {
 	//Count how many 8x8 blocks there can be in an x times y matrix
-	length := len(pixels)
-	width := len(pixels[0])
-	fmt.Println("Pixels: ", len(pixels), " x ", len(pixels[0]))
-	blocks := createBlocks(length, width)
-	f := 0
-	s := 0
-	for i := range (blocks) {
-		for j := range (blocks[i]) {
-			//Check for right corner
-			for z := s * 8; z/8 < s+1; z++ {
-				fmt.Print("|")
-				for y := f * 8; y/8 < f+1; y++ {
-					fmt.Print("[", z, ",", y, "]")
-					b := z%8
-					n := y%8
-					blocks[i][j][b][n] = pixels[z][y]
-				}
-				fmt.Println("|")
-			}
-			f++
-			if f == length/8 {
-				f = 0
-				s++
-			}
-			fmt.Println("f", f)
+	x := len(pixels)
+	y := len(pixels[0])
+	count := (x * y) / 64
+	blocks := make([][][]float32, count)
+	for i := range blocks {
+		blocks[i] = make([][]float32, 8)
+		for j := range blocks[i] {
+			blocks[i][j] = make([]float32, 8)
 		}
-		if s == width/8 {
-			s = 0;
-			f++
-		}
-
-		fmt.Println("--------------------------------------------------------------------------------")
-		fmt.Println("")
-
 	}
+	z := 0
+	//Extra iteration counter, so we can keep resetting m
+	m := 0
+	//TODO: Stop when reaching the end
+	for d := 0; d < len(blocks); d++ {
+		//A single 8x8 block
+		for i := z * 8; i/8 < z+1; i++ {
+			//f and g are in-block trackers
+			f := 0
+			for j := m * 8; j/8 < m+1; j++ {
+				g := 0
+				currPixel := pixels[i][j]
+				blocks[d][f][g] = currPixel
+				g++
+			}
+			f++
+		}
+		blocks[d] = blocksT(blocks[d])
+		m++
+		//Reached right corner
+		//Restart algorithm, one row down
+		if x/8 == m {
+			z++
+			m = 0
 
-	fmt.Println(blocks)
-	return blocks
+		}
+		//The transformed 8x8 block
+		//transformed := make([][]float32, x, y)
+		//Transform 8x8 block by transforming all rows, then transforming all columns
+		//get 8xY sized block
+		//Get [0,0], [8,8],[8,16] etc. every 8th tile in the 2D array
+
+		//build a matrix of 8x8 blocks
+		//Transform H into orthogonal matrix-> Inverse is faster
+		//Normalize each colmn of the starting matrix to length 1
+	}
+	field := zigZag(blocks)
+	return field
 }
 
 func createBlocks(x int, y int) [][][][]float32 {

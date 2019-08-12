@@ -36,8 +36,8 @@ func TestEightxEight(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := EightxEight(tt.args.pixels); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("EightxEight() = %v, want %v", got, tt.want)
+			if got := eightxeight(tt.args.pixels); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("eightxeight() = %v, want %v", got, tt.want)
 			}
 		})
 	}
