@@ -1,4 +1,4 @@
-package bitmapalg
+package main
 
 import "fmt"
 

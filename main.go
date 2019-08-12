@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/infoObfuscation/binaryIo"
-	"github.com/infoObfuscation/input"
 )
 
 /*
@@ -25,9 +23,9 @@ kjer:
 
 func main() {
 	//Parse command line arguments
-	command := input.Read()
-	pixels := binaryIo.Bitmapr(command.Bmp)
-	text := binaryIo.Textr(command.Message)
+	command := Read()
+	pixels := Bitmapr(command.Bmp)
+	text := Textr(command.Message)
 	fmt.Println(len(pixels) , "x", len(pixels[0]), " TEXT : " , len(text))
 
 }
