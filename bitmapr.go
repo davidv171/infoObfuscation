@@ -9,7 +9,7 @@ import (
 )
 
 //Open the bitmap in input read
-func Bitmapr(path string) [][]float32 {
+func bitmapr(path string) [][]float32 {
 	f, err := os.Open(path)
 	if err != nil {
 		fmt.Println("Cannot bitmapr the bitmap in the path? ", path)

@@ -7,7 +7,7 @@ import (
 )
 
 //Read text file as binary
-func Textr(path string) []byte{
+func textr(path string) []byte{
 	fmt.Println("Trying to open text file" , path)
 	file,err := os.Open(path)
 	if(err != nil){

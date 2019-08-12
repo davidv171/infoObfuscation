@@ -1,9 +1,8 @@
 package main
 
-
-
 //Global zig zag, takes in an array of 8x8 blocks, then zig zags all of them simultaneously, offsetting the indexes by each matrix index
 //arrayOfBlocks[blockIndex][i][j] -> result[blockIndex + iterator]
+//Quantize last THR coefficients to 0
 func zigZag(block [][][]float32) []float32 {
 	//Resulting a NxN length 1D matrix from an 8x8 block
 	l := len(block)
@@ -78,4 +77,8 @@ func zigZag(block [][][]float32) []float32 {
 	}
 
 	return result
+}
+
+func quantizeZigZag(thr int64, zigzagged []float32) {
+
 }
