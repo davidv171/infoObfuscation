@@ -79,10 +79,14 @@ func blockzigzag(block [][]float32) []float32 {
 Last threshold amount of elements are set to 0
 Threshold is set by the user
 */
-func quantize(thr uint64, zigzagged []float32) ([]float32) {
-	for j := 63; uint64(j) > uint64(63)-thr; j-- {
-		zigzagged[j] = 0
+func quantize(thr uint64, zigzagged []float32) ([]uint32) {
+	quantized := make([]uint32,len(zigzagged))
+	for i := 0; i < len(zigzagged) - int(thr); i++ {
+		quantized[i] = uint32(zigzagged[i])
 	}
-	return zigzagged
+	for j := 63; uint64(j) > uint64(63)-thr; j-- {
+		quantized[j] = 0
+	}
+	return quantized
 
 }
