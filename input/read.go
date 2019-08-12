@@ -21,6 +21,7 @@ func Read() Command {
 	}
 	fmt.Println("Exiting due to false input commands")
 	os.Exit(1)
+	return Command{}
 }
 func integers() (uint64,uint64){
 	thr, err := strconv.ParseUint(os.Args[4], 10, 32)
@@ -47,9 +48,9 @@ M: amount of unique triplet non zero coefficients, used in F5 steganography
 
 */
 type Command struct {
-	bmp      string
-	option   string
-	message  string
-	thr      uint64
-	triplets uint64
+	Bmp      string
+	Option   string
+	Message  string
+	Thr      uint64
+	Triplets uint64
 }
