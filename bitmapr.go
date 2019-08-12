@@ -15,7 +15,7 @@ func Bitmapr(path string) [][]float32 {
 		fmt.Println("Cannot bitmapr the bitmap in the path? ", path)
 	}
 	r := bufio.NewReader(f)
-	fmt.Println("The file is %d bytes long before performing obfuscation ", r.Size())
+	fmt.Println("The bitmap is: ", r.Size(), "bytes long before obfuscation")
 	btmp, err := bmp.Decode(r)
 	if err != nil {
 		fmt.Println("Could not decode bitmap ", err)
