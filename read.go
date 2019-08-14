@@ -17,6 +17,7 @@ func Read() Command {
 			os.Args[3],
 			thr,
 			triplets,
+			triplets*thr,
 		}
 	}
 	fmt.Println("Exiting due to false input commands")
@@ -48,9 +49,10 @@ M: amount of unique triplet non zero coefficients, used in F5 steganography
 
 */
 type Command struct {
-	Bmp      string
-	Option   string
-	Message  string
-	Thr      uint64
-	Triplets uint64
+	bmp      string
+	option   string
+	message  string
+	thr      uint64
+	triplets uint64
+	seed     uint64
 }

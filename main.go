@@ -24,8 +24,8 @@ kjer:
 func main() {
 	//Parse command line arguments
 	command := Read()
-	pixels := bitmapr(command.Bmp)
-	text := textr(command.Message)
+	pixels := bitmapr(command.bmp)
+	text := textr(command.message)
 	fmt.Println(len(pixels) , "x", len(pixels[0]), " TEXT : " , len(text))
 
 }
