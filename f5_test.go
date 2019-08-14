@@ -124,3 +124,61 @@ func Test_triplets(t *testing.T) {
 		})
 	}
 }
+
+func Test_lsb(t *testing.T) {
+	type args struct {
+		f float32
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{"Basic test", args{53.0}, false},
+
+		{"Basic test 0", args{53.1}, false},
+
+		{"Basic test sanity", args{66.2}, false},
+
+		{"Basic test for 1", args{19.999999}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := lsb(tt.args.f); got != tt.want {
+				t.Errorf("lsb() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_next2bits(t *testing.T) {
+	type args struct {
+		text byte
+		i    uint
+	}
+	tests := []struct {
+		name  string
+		args  args
+		want  bool
+		want1 bool
+	}{
+		{"Basic test with sample text, get first and second for byte 45", args{45,0},false,false},
+		{"Basic test with sample text, get third and fourth for byte 45", args{45,3},false,true},
+
+		{"Basic test with sample text, get fourth and fifth for byte 45", args{45,4},true,true},
+
+
+		{"Basic test with sample text, get get sixth and seventh(last2) for byte 99", args{99,6},true,true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, got1 := next2bits(tt.args.text, tt.args.i)
+			if got != tt.want {
+				t.Errorf("next2bits() got = %v, want %v", got, tt.want)
+			}
+			if got1 != tt.want1 {
+				t.Errorf("next2bits() got1 = %v, want %v", got1, tt.want1)
+			}
+		})
+	}
+}
