@@ -1,11 +1,9 @@
 package main
 
 import (
-	"bytes"
-	"encoding/binary"
 	"fmt"
 	"math/rand"
-	"os"
+	"unsafe"
 )
 
 /*
@@ -27,20 +25,32 @@ type Span struct {
 	end   int
 }
 
+type F5 struct {
+	x1, x2, c1, c2, c3 bool
+}
+
 func f5(command Command, block []float32, text []byte) {
 	//Izberi M naključnih unikatnih trojic neničelnih koeficientov srednjih frekvenc
 	triplets := triplets(command, block)
 	//Keeps track of bytes
-	//wordc := 0
+	wordc := 0
 	//Keeps track of bits inside the byte
 	counter := 0
+	//Keeps track of bits
 	for i := 0; i < len(triplets); i += 3 {
 		c1 := lsb(triplets[i])
 		c2 := lsb(triplets[i+1])
 		c3 := lsb(triplets[i+2])
 		//For each triplet take 2 bits of the binarized message, defined as x1 and x2
-		//x1, x1 := next2bits(text, counter)
+		x1, x2 := next2bits(text[wordc])[counter], next2bits(text[wordc])[counter+1]
+
+		tripletmath(F5{x1, x2, c1, c2, c3})
+
 		counter += 2
+		if i%8 == 0 {
+			counter = 0
+			wordc++
+		}
 		fmt.Println(c1, c2, c3)
 
 	}
@@ -48,8 +58,28 @@ func f5(command Command, block []float32, text []byte) {
 	//C1 = LSB(AC1), C2 = LSB(AC2), C3 = LSB(AC3)
 
 }
+
+func tripletmath(f5 F5) (F5){
+
+	//x1 = c1 + c2  && x2 = c2 + c3 -> no change
+	//x1 != c1 + c2 && x2 = c2 +c3 -> negate LSB AC1
+	//x1 = c1 + c2 && x2!= c2 + c3 -> negate lsb ac3
+	//x1 != c1+c2 && x2 != c2 +c3 -> negate lsb ac2
+	if f5.x1 != f5.c1 && f5.c2 != f5.c3 {
+		f5.c1 = !f5.c1
+	}
+	if f5.x1 == f5.c1 != f5.c2 && f5.x2 != f5.c2 != f5.c3 {
+		f5.c2 = !f5.c2
+	}
+	if f5.x1 != f5.c1 != f5.c2 && f5.x2 != f5.c2 != f5.c3 {
+		f5.c2 = !f5.c2
+	}
+	return f5
+
+}
+
 //Get the next 2 bits in the message, i is used as a counter so we don't have to keep state
-func next2bits(text byte, counter uint) (bool,bool) {
+func next2bits(text byte) ([]bool) {
 	bits := make([]bool, 8)
 	var i uint8
 	//Loop through the byte and turn it into bit sequence using AND and masking
@@ -64,7 +94,7 @@ func next2bits(text byte, counter uint) (bool,bool) {
 		}
 
 	}
-	return bits[counter],bits[counter+1]
+	return bits
 
 }
 
@@ -109,19 +139,5 @@ func rng(span Span) int {
 
 //Get least significant bit of a float32
 func lsb(f float32) bool {
-	//Turn to bytes
-	var buf bytes.Buffer
-	err := binary.Write(&buf, binary.LittleEndian, f)
-	if err != nil {
-		fmt.Println("binary.Write failed:", err)
-		os.Exit(1)
-	}
-	b := make([]byte, 4)
-	buf.Read(b);
-	if b[len(b)-1]%2 == 0 {
-		return true
-	} else {
-		return false
-	}
-
+	return (*(*[4]byte)(unsafe.Pointer(&f)))[3] << 7 == 1
 }

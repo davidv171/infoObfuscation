@@ -151,33 +151,25 @@ func Test_lsb(t *testing.T) {
 	}
 }
 
-func Test_next2bits(t *testing.T) {
+func Test_tripletmath(t *testing.T) {
 	type args struct {
-		text byte
-		i    uint
+		f5 F5
 	}
 	tests := []struct {
-		name  string
-		args  args
-		want  bool
-		want1 bool
+		name string
+		args args
+		want F5
 	}{
-		{"Basic test with sample text, get first and second for byte 45", args{45,0},false,false},
-		{"Basic test with sample text, get third and fourth for byte 45", args{45,3},false,true},
+		{"Basic test for f5 triple math, all true" , args{F5{true,true,true,true,true}},F5{true,true,true,false,true}},
+		{"All false for f5 triple math", args{F5{false,false,false,false,false}}, F5{false,false,false,false,false}},
+		{"x1 and x2 false, others true", args{F5{false,false,true,true,true}},F5{false,false,true,true,true}},
+		{"x1 and x2 true, c2 false, others true", args{F5{true,true,true,false,true}},F5{true,true,true,false,true}},
 
-		{"Basic test with sample text, get fourth and fifth for byte 45", args{45,4},true,true},
-
-
-		{"Basic test with sample text, get get sixth and seventh(last2) for byte 99", args{99,6},true,true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1 := next2bits(tt.args.text, tt.args.i)
-			if got != tt.want {
-				t.Errorf("next2bits() got = %v, want %v", got, tt.want)
-			}
-			if got1 != tt.want1 {
-				t.Errorf("next2bits() got1 = %v, want %v", got1, tt.want1)
+			if got := tripletmath(tt.args.f5); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("tripletmath() = %v, want %v", got, tt.want)
 			}
 		})
 	}
