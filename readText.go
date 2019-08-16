@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-//Read text file as binary
+//read text file as binary
 func textr(path string) []byte{
 	fmt.Println("Trying to open text file" , path)
 	file,err := os.Open(path)
@@ -21,6 +21,6 @@ func textr(path string) []byte{
 		fmt.Println("Could not read the file into bytes " , err)
 		os.Exit(1)
 	}
-	fmt.Println("Read file of size", size , "into bytes before cutting" , len(bytes))
+	fmt.Println("read file of size", size , "into bytes before cutting" , len(bytes))
 	return bytes[:size]
 }

@@ -1,13 +1,18 @@
 package main
 
+import (
+	"fmt"
+	"os"
+)
+
 //Global zig zag, takes in an array of 8x8 blocks, then zig zags all of them simultaneously, offsetting the indexes by each matrix index
 //arrayOfBlocks[blockIndex][i][j] -> result[blockIndex + iterator]
 //Quantize last THR coefficients to 0
 
-
 /*Zig zag an 8x8 block*/
-func blockzigzag(block [][]float32) []float32 {
+func blockzigzag(block [][]float32) [][]float32 {
 	result := make([]float32, 64)
+
 	iterator := 0
 	firsthalf := true
 	i := 0
@@ -70,23 +75,80 @@ func blockzigzag(block [][]float32) []float32 {
 			}
 		}
 	}
-	return result
+	//Reconstruct 2D block
+	return reconstructfloat(result)
 
 }
-
 
 /*
 Last threshold amount of elements are set to 0
 Threshold is set by the user
 */
-func quantize(thr uint64, zigzagged []float32) ([]uint32) {
-	quantized := make([]uint32,len(zigzagged))
-	for i := 0; i < len(zigzagged) - int(thr); i++ {
-		quantized[i] = uint32(zigzagged[i])
+func quantize(thr uint64, zigzagged [][]float32) ([][]uint32) {
+	if zigzagged == nil {
+		fmt.Println("Did not receive valid zigzag")
+		os.Exit(1)
 	}
-	for j := 63; uint64(j) > uint64(63)-thr; j-- {
-		quantized[j] = 0
+	quantized := make([][]uint32,8)
+	for i := range quantized {
+		quantized[i] = make([]uint32,8)
+	}
+	start := 64 - int(thr)
+	index := 0
+	for i := range zigzagged {
+		for j := range zigzagged[0] {
+			if index > start {
+				quantized[i][j] = 0
+			}else {
+				quantized[i][j] = uint32(zigzagged[i][j])
+				index++
+
+			}
+		}
 	}
 	return quantized
 
+}
+
+//Reconstruct an 8x8 matrix out of 64 length 1D matrix
+func reconstructfloat(result []float32) [][]float32 {
+	reconstructed := make([][]float32, 8)
+	for i := range reconstructed {
+		reconstructed[i] = make([]float32, 8)
+	}
+	c := 0
+	for i := 0; i < len(result); i += 8 {
+		adding := result[i : i+8]
+		reconstructed[c] = adding
+		c++
+	}
+	return reconstructed
+}
+
+
+//Reconstruct an 8x8 matrix out of 64 length 1D matrix
+func reconstructuint(result []uint32) [][]uint32 {
+	reconstructed := make([][]uint32, 8)
+	for i := range reconstructed {
+		reconstructed[i] = make([]uint32, 8)
+	}
+	c := 0
+	for i := 0; i < len(result); i += 8 {
+		adding := result[i : i+8]
+		reconstructed[c] = adding
+		c++
+	}
+	return reconstructed
+}
+//turn 8x8 into 64 length 1D
+func flatten(input [][]uint32) []uint32 {
+	flattened := make([]uint32,64)
+	counter := 0
+	for i := range input {
+		for j := range input[0] {
+			flattened[counter] = input[i][j]
+			counter++
+		}
+	}
+	return flattened
 }

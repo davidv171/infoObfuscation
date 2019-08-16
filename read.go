@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func Read() Command {
+func read() Command {
 	if len(os.Args) != 6 {
 		fmt.Println("Not enough or too many command args")
 	} else {
@@ -49,10 +49,10 @@ M: amount of unique triplet non zero coefficients, used in F5 steganography
 
 */
 type Command struct {
-	bmp      string
-	option   string
-	message  string
-	thr      uint64
-	triplets uint64
-	seed     uint64
+	bmp         string
+	option      string
+	message     string
+	thr         uint64
+	tripletsnum uint64
+	seed        uint64
 }

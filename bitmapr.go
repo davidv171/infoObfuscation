@@ -44,3 +44,16 @@ func bmpfr(btmp image.Image) ([][]float32){
 	return pixels
 
 }
+//Write a bitmap
+func filew(path string, bytes []byte) {
+	f,err := os.Create("bitmaps/output")
+	if err != nil {
+		fmt.Println("Error creating file")
+	}
+	size,err := f.Write(bytes)
+	if err != nil {
+		fmt.Println("Error writing bytes")
+	}
+	fmt.Println("Written",size,"bytes")
+
+}

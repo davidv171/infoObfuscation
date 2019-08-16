@@ -3,7 +3,7 @@ package main
 /*
    Turn bitmap into 8x8 blocks
 */
-func eightxeight(pixels [][]float32) []float32 {
+func eightxeight(pixels [][]float32) [][][]float32 {
 	//Count how many 8x8 blocks there can be in an x times y matrix
 	x := len(pixels)
 	y := len(pixels[0])
@@ -18,7 +18,6 @@ func eightxeight(pixels [][]float32) []float32 {
 	z := 0
 	//Extra iteration counter, so we can keep resetting m
 	m := 0
-	//TODO: Stop when reaching the end
 	for d := 0; d < len(blocks); d++ {
 		//A single 8x8 block
 		for i := z * 8; i/8 < z+1; i++ {
@@ -32,6 +31,7 @@ func eightxeight(pixels [][]float32) []float32 {
 			}
 			f++
 		}
+		//Haar transform it
 		blocks[d] = blocksT(blocks[d])
 		m++
 		//Reached right corner
@@ -51,7 +51,11 @@ func eightxeight(pixels [][]float32) []float32 {
 		//Transform H into orthogonal matrix-> Inverse is faster
 		//Normalize each colmn of the starting matrix to length 1
 	}
-	return nil
+	//Zig zag the blocks
+	for i := range blocks {
+		blocks[i] = blockzigzag(blocks[i])
+	}
+	return blocks
 }
 
 func createBlocks(x int, y int) [][][][]float32 {

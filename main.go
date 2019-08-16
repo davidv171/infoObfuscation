@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"image"
+	"image/color"
+	"unsafe"
 )
 
 /*
@@ -20,17 +23,67 @@ kjer:
 
 
 */
+//Bitmap stuff, x,y -> dimensions
+
+type Bitmap struct {
+	model color.Model
+	x, y  image.Rectangle
+}
 
 func main() {
 	//Parse command line arguments
-	command := Read()
-	pixels := bitmapr(command.bmp)
-	text := textr(command.message)
-	fmt.Println(len(pixels) , "x", len(pixels[0]), " TEXT : " , len(text))
+	command := read()
+	if command.option == "h" {
+		pixels := bitmapr(command.bmp)
+		text := textr(command.message)
+		textbits := text2bits(text)
+		zigzag := eightxeight(pixels)
+		quantized := make([][][]uint32, len(zigzag))
+		for i := range zigzag {
+			quantized[i] = quantize(command.thr, zigzag[i])
+		}
+		fmt.Println(textbits, "\n", quantized)
+		candidates := make([]int, 0)
+		candidateblocks := make([][][]uint32, 0)
+		for i := 0; i < len(textbits)/int((command.tripletsnum * 2)); i++ {
+			x := rng(Span{0, len(quantized) - 1})
+			for j := range candidates {
+				if x == candidates[j] {
+					x = rng(Span{0, len(quantized)})
+					j = 0
+				}
+			}
+			candidates = append(candidates, x)
+			candidateblocks = append(candidateblocks, f5(command, flatten(quantized[x]), textbits))
 
+		}
+		stegblocks := blockarize(quantized, candidateblocks, candidates)
+		filew("bitmaps/output", serialize(stegblocks))
+	} else {
+		fmt.Println("Decoding")
+	}
 }
 
-
+//Get the f5'd blocks into the thing
+func blockarize(quantized [][][]uint32, candidateblocks [][][]uint32, candidates []int) [][][]uint32 {
+	for i := range candidateblocks {
+		quantized[candidates[i]] = candidateblocks[i]
+	}
+	return quantized
+}
+func serialize(quantized [][][]uint32) []byte {
+	serialize := make([]byte, 0)
+	for i := range quantized {
+		for j := range quantized[0] {
+			for l := range quantized[0][0] {
+				curr := quantized[i][j][l]
+				a := (*[4]byte)(unsafe.Pointer(&curr))[:]
+				serialize = append(serialize, a...)
+			}
+		}
+	}
+	return serialize
+}
 
 /*
 

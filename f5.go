@@ -4,9 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"math"
 	"math/rand"
-	"unsafe"
 )
 
 /*
@@ -22,7 +20,9 @@ Trojice med sabo nimajo prekrivanja.
 /*
 Takes a quantized block(quantized: 64 - THR bits are 0), that hasn't been F5'd before, performs F5 algorithm on it
 */
-
+type Index struct {
+	x,y int
+}
 type Span struct {
 	start int
 	end   int
@@ -30,56 +30,75 @@ type Span struct {
 
 type F5 struct {
 	x1, x2, c1, c2, c3 bool
+	triplet            Triplet
 }
 
-func f5(command Command, block []float32, text []byte) {
+//A randomly picked triplet of three neighboring coefficients
+type Triplet struct {
+	a, b, c uint32
+}
+
+/*Calculate the F5 algorithm on a block and a part of the text*/
+func f5(command Command, block []uint32, textbits []bool) ([][]uint32) {
 	//Izberi M naključnih unikatnih trojic neničelnih koeficientov srednjih frekvenc
-	triplets := triplets(command, block)
-	//Keeps track of bytes, float32 -> 4 bytes per thing
-	wordc := 0
-	//Keeps track of bits inside the byte
-	counter := 0
-	//Keeps track of bits
-	//bits := block2bits(block)
+	triplets, indexes := triplets(command, block)
+
+	//Keeps track of textbits inside the byte
+	textbitc := 0
+	//Keeps track of textbits
 	for i := 0; i < len(triplets); i += 3 {
-		c1 := lsb(triplets[i])
-		c2 := lsb(triplets[i+1])
-		c3 := lsb(triplets[i+2])
-		//For each triplet take 2 bits of the binarized message, defined as x1 and x2
-		x1, x2 := getbits(text[wordc])[counter], getbits(text[wordc])[counter+1]
-		f5 := tripletmath(F5{x1, x2, c1, c2, c3})
-		//Set LSBs of blocks
+		currentTriplet := Triplet{triplets[i], triplets[i+1], triplets[i+2]}
 
-		fmt.Println(f5)
-		counter += 2
-		if i%8 == 0 {
-			counter = 0
-			wordc++
-		}
-		fmt.Println(c1, c2, c3)
+		//For each triplet take 2 textbits of the binarized message, defined as x1 and x2
+		x1, x2 := textbits[textbitc], textbits[textbitc+1]
+		//Every triplet is defined by 3 coefficients AC1,AC2,AC3
+		//C1 = LSB(AC1), C2 = LSB(AC2), C3 = LSB(AC3)
+		f5 := F5{x1, x2, false, false, false, currentTriplet}
+		f5.tripletmath()
 
+		//Change the block coefficients that were chosen with the bits
+
+		block[indexes[i]] = f5.triplet.a
+		block[indexes[i+1]] = f5.triplet.b
+		block[indexes[i+2]] = f5.triplet.c
+		textbitc += 2
 	}
-	//Every triplet is defined by 3 coefficients AC1,AC2,AC3
-	//C1 = LSB(AC1), C2 = LSB(AC2), C3 = LSB(AC3)
+	return reconstructuint(block)
 
 }
 
-func tripletmath(f5 F5) (F5) {
-
+func (f5 *F5) tripletmath() {
+	f5.c1 = lsb(f5.triplet.a)
+	f5.c2 = lsb(f5.triplet.b)
+	f5.c3 = lsb(f5.triplet.c)
 	//x1 = c1 + c2  && x2 = c2 + c3 -> no change
 	//x1 != c1 + c2 && x2 = c2 +c3 -> negate LSB AC1
 	//x1 = c1 + c2 && x2!= c2 + c3 -> negate lsb ac3
 	//x1 != c1+c2 && x2 != c2 +c3 -> negate lsb ac2
-	if f5.x1 != f5.c1 != f5.c2 && f5.c2 != f5.c3 {
+	if f5.x1 == (f5.c1 != f5.c2) && f5.x2 == (f5.c2 != f5.c3) {
+		//no changes
+		return
+	}
+	if f5.x1 != (f5.c1 != f5.c2) && f5.x2 == (f5.c2 != f5.c3) {
+		//negate lsb ac1
 		f5.c1 = !f5.c1
+		f5.triplet.a = toggleUintLSB(f5.triplet.a)
+		return
 	}
 	if f5.x1 == f5.c1 != f5.c2 && f5.x2 != f5.c2 != f5.c3 {
+		//negate lsb ac3
 		f5.c2 = !f5.c2
+		f5.triplet.c = toggleUintLSB(f5.triplet.c)
+		return
+
 	}
 	if f5.x1 != f5.c1 != f5.c2 && f5.x2 != f5.c2 != f5.c3 {
+		//negate lsb ac2
 		f5.c2 = !f5.c2
+		f5.triplet.b = toggleUintLSB(f5.triplet.b)
+		return
+
 	}
-	return f5
 
 }
 
@@ -102,9 +121,16 @@ func getbits(text byte) ([]bool) {
 	return bits
 
 }
+func text2bits(text []byte) []bool {
+	bits := make([]bool, 0)
+	for b := range text {
+		bits = append(bits, getbits(text[b])...)
+	}
+	return bits
+}
 
-//Picks triplets from a block
-func triplets(command Command, block []float32) ([]float32) {
+//Picks tripletsnum from a block
+func triplets(command Command, block []uint32) ([]uint32, []int) {
 	//4-32, bigger the thr, smaller the span
 	span := Span{4, 32}
 	if command.thr > 32 {
@@ -113,8 +139,8 @@ func triplets(command Command, block []float32) ([]float32) {
 	rand.Seed(int64(command.seed))
 	//Keep track of what we pickedindexes
 	pickedindexes := make([]int, 0)
-	//Pick an M amount of triplets
-	for i := 0; i < int(command.triplets)*3; i += 3 {
+	//Pick an M amount of tripletsnum
+	for i := 0; i < int(command.tripletsnum)*3; i += 3 {
 		random := rng(span)
 		for j := 0; j < len(pickedindexes); j++ {
 			if pickedindexes[j] == random || pickedindexes[j] == random+1 || pickedindexes[j] == random+2 {
@@ -127,13 +153,12 @@ func triplets(command Command, block []float32) ([]float32) {
 		pickedindexes = append(pickedindexes, random+2)
 
 	}
-	fmt.Println(pickedindexes)
-	pickedtriplets := make([]float32, len(pickedindexes))
+	pickedtriplets := make([]uint32, len(pickedindexes))
 	for z := range pickedindexes {
 		pickedtriplets[z] = block[pickedindexes[z]]
 	}
 
-	return pickedtriplets
+	return pickedtriplets, pickedindexes
 
 }
 
@@ -142,9 +167,14 @@ func rng(span Span) int {
 	return rand.Intn(span.end-span.start+1) + span.start
 }
 
+
 //Get least significant bit of a float32
-func lsb(f float32) bool {
-	return (*(*[4]byte)(unsafe.Pointer(&f)))[3]<<7 == 1
+func lsb(f uint32) bool {
+	if f%2 == 0 {
+		return false
+	} else {
+		return true
+	}
 }
 
 //Set an LSB of a byte
@@ -156,21 +186,20 @@ func setlsb(bit bool, source byte) (byte) {
 	}
 
 }
-func togglelsb(source byte) (byte){
+func togglelsb(source byte) (byte) {
 	source ^= 1
 	return source
 }
 
 //Take in a float, toggle it's LSB and return the new value
-func toggleFloatLSB(f float32) float32 {
+func toggleUintLSB(u uint32) uint32 {
 	var buf bytes.Buffer
-	err := binary.Write(&buf, binary.LittleEndian, f)
+	err := binary.Write(&buf, binary.BigEndian, u)
 	if err != nil {
 		fmt.Println("binary.Write failed when toggling float LSB:", err)
 	}
 	bytes := buf.Bytes()
 	bytes[3] = togglelsb(buf.Bytes()[3])
-	bits := binary.LittleEndian.Uint32(bytes)
-
-	return math.Float32frombits(bits)
+	bits := binary.BigEndian.Uint32(bytes)
+	return bits
 }
