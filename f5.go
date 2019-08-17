@@ -102,6 +102,8 @@ func (f5 *F5) tripletmath() {
 
 }
 
+
+
 //Get the bits in the message, i is used as a counter so we don't have to keep state
 func getbits(text byte) ([]bool) {
 	bits := make([]bool, 8)
@@ -129,6 +131,19 @@ func text2bits(text []byte) []bool {
 	return bits
 }
 
+func bitSliceToByte(bitSlice []bool) byte {
+	var i uint8 = 0
+	var resultingByte byte
+
+	for i = 0; i < uint8(len(bitSlice)); i++ {
+		if (bitSlice)[i] {
+			resultingByte |= 1 << (7 - i)
+		}
+	}
+	return resultingByte
+}
+
+
 //Picks tripletsnum from a block
 func triplets(command Command, block []uint32) ([]uint32, []int) {
 	//4-32, bigger the thr, smaller the span
@@ -136,7 +151,6 @@ func triplets(command Command, block []uint32) ([]uint32, []int) {
 	if command.thr > 32 {
 		span.end = 64 - int(command.thr)
 	}
-	rand.Seed(int64(command.seed))
 	//Keep track of what we pickedindexes
 	pickedindexes := make([]int, 0)
 	//Pick an M amount of tripletsnum
@@ -164,6 +178,7 @@ func triplets(command Command, block []uint32) ([]uint32, []int) {
 
 //generate random int between min and max val
 func rng(span Span) int {
+
 	return rand.Intn(span.end-span.start+1) + span.start
 }
 

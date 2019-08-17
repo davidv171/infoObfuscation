@@ -1,9 +1,12 @@
 package main
 
 import (
+	"encoding/binary"
 	"fmt"
 	"image"
 	"image/color"
+	"math/rand"
+	"os"
 	"unsafe"
 )
 
@@ -29,22 +32,40 @@ type Bitmap struct {
 	model color.Model
 	x, y  image.Rectangle
 }
+type BitmapDimensions struct {
+	x, y int
+}
 
 func main() {
 	//Parse command line arguments
+
 	command := read()
+
+	rand.Seed(int64(command.seed))
+
 	if command.option == "h" {
-		pixels := bitmapr(command.bmp)
+
+		pixels, bitmapdim := bitmapr(command.bmp)
+
 		text := textr(command.message)
+
 		textbits := text2bits(text)
+
 		zigzag := eightxeight(pixels)
+
 		quantized := make([][][]uint32, len(zigzag))
+
 		for i := range zigzag {
 			quantized[i] = quantize(command.thr, zigzag[i])
 		}
+
 		fmt.Println(textbits, "\n", quantized)
 		candidates := make([]int, 0)
 		candidateblocks := make([][][]uint32, 0)
+
+		wc := 0
+		messagebits := make([]bool,0)
+
 		for i := 0; i < len(textbits)/int((command.tripletsnum * 2)); i++ {
 			x := rng(Span{0, len(quantized) - 1})
 			for j := range candidates {
@@ -54,14 +75,84 @@ func main() {
 				}
 			}
 			candidates = append(candidates, x)
-			candidateblocks = append(candidateblocks, f5(command, flatten(quantized[x]), textbits))
+			words := textbits[wc:wc+int(command.tripletsnum*2)]
+
+			messagebits  = append(messagebits,words...)
+
+			candidateblocks = append(candidateblocks, f5(command, flatten(quantized[x]), words))
+			wc+=int(command.tripletsnum*2)
 
 		}
+		extracted := make([]byte,0)
+		for i := 0; i < len(messagebits);i+=8 {
+			extracted = append(extracted,bitSliceToByte(messagebits[i:i+8]))
+		}
+		fmt.Println(extracted)
+		extr := string(extracted)
+		fmt.Println("Message:", extr)
 		stegblocks := blockarize(quantized, candidateblocks, candidates)
-		filew("bitmaps/output", serialize(stegblocks))
+		filew("bitmaps/output", serialize(stegblocks, bitmapdim))
 	} else {
-		fmt.Println("Decoding")
+
+		fmt.Println("Decoding", command.bmp)
+
+		readb := filer(command.bmp)
+
+		deserialized := deserialize(readb)
+		dim := deserialized[0]
+		fmt.Println("Dimension of coefficients", dim)
+		//Cut out the dimensions
+		deserialized = deserialized[1:]
+
+		reconstructed := make([][][]uint32, 0)
+
+		candidates := make([]int, 0)
+		//candidateblocks := make([][][]uint32, 0)
+		message := make([]bool, 0)
+		for i := 0; i < len(deserialized); i+=64{
+			recon := reconstructuint(deserialized[i : i+64])
+			if recon == nil {
+				fmt.Println("Unable to deserialize file")
+				os.Exit(1)
+			}
+			reconstructed = append(reconstructed, recon)
+
+		}
+		size := (len(deserialized)/64) -1
+		for i := 0; i < 900 /int((command.tripletsnum * 2)); i++ {
+			x := rng(Span{0, size})
+			for j := range candidates {
+				if x == candidates[j] {
+					x = rng(Span{0, size})
+					j = 0
+				}
+
+			}
+			candidates = append(candidates, x)
+			//			candidateblocks = append(candidateblocks, f5(command, flatten(quantized[x]), textbits))
+			coeffs := flatten(reconstructed[x])
+			message = append(message, inversef5(coeffs, command)...)
+
+		}
+		extracted := make([]byte,0)
+	 	for i := 0; i < len(message);i+=8 {
+	 		extracted = append(extracted,bitSliceToByte(message[i:i+8]))
+		}
+	 	fmt.Println(extracted)
+	 	extr := string(extracted)
+	 	fmt.Println("Message:", extr)
+
 	}
+}
+
+func deserialize(bytesd []byte) ([]uint32) {
+	des := make([]uint32, len(bytesd)/4)
+	c := 0
+	for i := 0; i < len(bytesd); i += 4 {
+		des[c] = binary.LittleEndian.Uint32(bytesd[i : i+4])
+		c++
+	}
+	return des
 }
 
 //Get the f5'd blocks into the thing
@@ -71,9 +162,12 @@ func blockarize(quantized [][][]uint32, candidateblocks [][][]uint32, candidates
 	}
 	return quantized
 }
-func serialize(quantized [][][]uint32) []byte {
+func serialize(quantized [][][]uint32, dimensions BitmapDimensions) []byte {
 	serialize := make([]byte, 0)
-	for i := range quantized {
+	//Encode the dimensions NxN at the start
+	b := (*[4]byte)(unsafe.Pointer(&dimensions.x))[:]
+	serialize = append(serialize, b...)
+	for i := 0; i < len(quantized); i++ {
 		for j := range quantized[0] {
 			for l := range quantized[0][0] {
 				curr := quantized[i][j][l]

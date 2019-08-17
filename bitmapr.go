@@ -9,7 +9,7 @@ import (
 )
 
 //Open the bitmap in input read
-func bitmapr(path string) [][]float32 {
+func bitmapr(path string) ([][]float32, BitmapDimensions) {
 	f, err := os.Open(path)
 	if err != nil {
 		fmt.Println("Cannot bitmapr the bitmap in the path? ", path)
@@ -20,13 +20,16 @@ func bitmapr(path string) [][]float32 {
 	if err != nil {
 		fmt.Println("Could not decode bitmap ", err)
 	}
-	return bmpfr(btmp)
+	x := btmp.Bounds().Size().X
+	y := btmp.Bounds().Size().Y
+
+	return bmpfr(btmp), BitmapDimensions{x, y}
 }
 
 /*
 bmpfr reads the pixels from the decoded bitmap into a 2D array
 */
-func bmpfr(btmp image.Image) ([][]float32){
+func bmpfr(btmp image.Image) ([][]float32) {
 
 	x := btmp.Bounds().Size().X
 	y := btmp.Bounds().Size().Y
@@ -44,16 +47,36 @@ func bmpfr(btmp image.Image) ([][]float32){
 	return pixels
 
 }
+
 //Write a bitmap
 func filew(path string, bytes []byte) {
-	f,err := os.Create("bitmaps/output")
+	f, err := os.Create("bitmaps/output")
 	if err != nil {
 		fmt.Println("Error creating file")
 	}
-	size,err := f.Write(bytes)
+	size, err := f.Write(bytes)
 	if err != nil {
 		fmt.Println("Error writing bytes")
 	}
-	fmt.Println("Written",size,"bytes")
+	fmt.Println("Written", size, "bytes")
 
+}
+
+func filer(path string) ([]byte){
+	f, err := os.Open(path)
+	if err != nil {
+		fmt.Println("Cannot find binary", path)
+	}
+	stat, err := f.Stat()
+	if err != nil {
+		fmt.Println("Couldn't get file size")
+	}
+	r := bufio.NewReader(f)
+	p := make([]byte, stat.Size())
+	s, err := r.Read(p)
+	if err != nil {
+		fmt.Println("Could not read file")
+	}
+	fmt.Println("Input size", s)
+	return p
 }
