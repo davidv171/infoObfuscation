@@ -22,7 +22,7 @@ func bitmapr(path string) ([][]float32, BitmapDimensions) {
 	}
 	x := btmp.Bounds().Size().X
 	y := btmp.Bounds().Size().Y
-
+	f.Close()
 	return bmpfr(btmp), BitmapDimensions{x, y}
 }
 
@@ -50,7 +50,7 @@ func bmpfr(btmp image.Image) ([][]float32) {
 
 //Write a bitmap
 func filew(path string, bytes []byte) {
-	f, err := os.Create("bitmaps/output")
+	f, err := os.Create(path)
 	if err != nil {
 		fmt.Println("Error creating file")
 	}
@@ -58,11 +58,13 @@ func filew(path string, bytes []byte) {
 	if err != nil {
 		fmt.Println("Error writing bytes")
 	}
+	defer f.Sync()
+
 	fmt.Println("Written", size, "bytes")
 
 }
 
-func filer(path string) ([]byte){
+func filer(path string) ([]byte) {
 	f, err := os.Open(path)
 	if err != nil {
 		fmt.Println("Cannot find binary", path)
@@ -78,5 +80,6 @@ func filer(path string) ([]byte){
 		fmt.Println("Could not read file")
 	}
 	fmt.Println("Input size", s)
+	f.Close()
 	return p
 }

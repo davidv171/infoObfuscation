@@ -146,6 +146,7 @@ func bitSliceToByte(bitSlice []bool) byte {
 
 //Picks tripletsnum from a block
 func triplets(command Command, block []uint32) ([]uint32, []int) {
+	rand.Seed(int64(command.seed))
 	//4-32, bigger the thr, smaller the span
 	span := Span{4, 32}
 	if command.thr > 32 {

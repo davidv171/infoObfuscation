@@ -20,19 +20,16 @@ func inversef5(coeffblock []uint32, command Command) ([]bool) {
 		f5.inversetripletmath()
 		x1, x2 := f5.x1, f5.x2
 		messagebits = append(messagebits, x1, x2)
-		btou(x1)
-		btou(x2)
 		//Change the block coefficients that were chosen with the bits
 	}
-	fmt.Println("")
 	return messagebits
 }
 func (f5 *F5) inversetripletmath() {
 	f5.c1 = lsb(f5.triplet.a)
 	f5.c2 = lsb(f5.triplet.b)
 	f5.c3 = lsb(f5.triplet.c)
-	f5.x1 = f5.c1 != f5.c2
-	f5.x2 = f5.c2 != f5.c3
+	f5.x1 = (f5.c1 != f5.c2)
+	f5.x2 = (f5.c2 != f5.c3)
 }
 
 func btou(b bool) {
@@ -42,4 +39,25 @@ func btou(b bool) {
 		fmt.Print(0, " ")
 
 	}
+}
+func inversionF5Caller(command Command, deserialized []uint32, reconstructed [][][]uint32) []bool{
+	candidates := make([]int, 0)
+	//candidateblocks := make([][][]uint32, 0)
+	message := make([]bool, 0)
+	size := (len(deserialized)/64) -1
+	for i := 0; i < 32 /int((command.tripletsnum * 2)); i++ {
+		x := rng(Span{0, size})
+		for j := 0; j < len(candidates);j++ {
+			if x == candidates[j] {
+				x = rng(Span{0, size})
+				j = 0
+			}
+
+		}
+		candidates = append(candidates, x)
+		coeffs := flatten(reconstructed[x])
+		message = append(message, inversef5(coeffs, command)...)
+
+	}
+	return message
 }
