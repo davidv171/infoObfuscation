@@ -51,7 +51,7 @@ func inversionF5Caller(command Command, deserialized []uint32, reconstructed [][
 		for j := 0; j < len(candidates);j++ {
 			if x == candidates[j] {
 				x = rng(Span{0, size})
-				j = 0
+				j = -1
 			}
 
 		}

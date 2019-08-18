@@ -161,7 +161,7 @@ func triplets(command Command, block []uint32) ([]uint32, []int) {
 		for j := 0; j < len(pickedindexes); j++ {
 			if pickedindexes[j] == random || pickedindexes[j] == random+1 || pickedindexes[j] == random+2 {
 				random = rng(span)
-				j = 0
+				j = -1
 			}
 		}
 		pickedindexes = append(pickedindexes, random)
