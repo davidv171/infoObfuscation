@@ -63,7 +63,8 @@ func f5(command Command, block []uint32, textbits []bool) ([][]uint32) {
 		block[indexes[i+2]] = f5.triplet.c
 		textbitc += 2
 	}
-	return reconstructuint(block)
+	newbl := reconstructuint(block)
+	return newbl
 
 }
 

@@ -63,20 +63,12 @@ func main() {
 		candidateblocks := make([][][]uint32, 0)
 
 		wc := 0
-		messagebits := make([]bool, 0)
 
 		for i := 0; i < len(textbits)/int((command.tripletsnum * 2)); i++ {
-			x := rng(Span{0, len(quantized) - 1})
-			for j := 0; j < len(candidates);j++ {
-				if x == candidates[j] {
-					x = rng(Span{0, len(quantized)})
-					j = 0
-				}
-			}
+			x := generaterng(candidates,len(quantized))
+
 			candidates = append(candidates, x)
 			words := textbits[wc : wc+int(command.tripletsnum*2)]
-
-			messagebits = append(messagebits, words...)
 
 			candidateblocks = append(candidateblocks, f5(command, flatten(quantized[x]), words))
 			wc += int(command.tripletsnum * 2)
@@ -95,11 +87,12 @@ func main() {
 		deserialized := deserialize(readb)
 		dim := deserialized[0]
 		fmt.Println("Dimension of coefficients", dim)
+
 		//Cut out the dimensions
 		deserialized = deserialized[1:]
 
 		reconstructed := reconstruct3D(deserialized)
-		fmt.Println("XD" ,reconstructed[2470][:3])
+
 		message := inversionF5Caller(command, deserialized, reconstructed)
 		extracted := make([]byte, 0)
 		for i := 0; i < len(message); i += 8 {
@@ -111,6 +104,19 @@ func main() {
 		fmt.Println("Message:", extr)
 
 	}
+}
+
+func generaterng(candidates []int,end int) int {
+	x := rng(Span{0, end - 1})
+	//Check if it's already generated
+	for j := 0; j < len(candidates);j++ {
+		if x == candidates[j] {
+
+			x = rng(Span{0, end-1})
+			j = -1
+		}
+	}
+	return x
 }
 
 func reconstruct3D(deserialized []uint32) [][][]uint32 {
@@ -127,7 +133,7 @@ func reconstruct3D(deserialized []uint32) [][][]uint32 {
 	return reconstructed
 }
 
-func deserialize(bytesd []byte) ([]uint32) {
+func deserialize(bytesd []byte) []uint32 {
 	des := make([]uint32, len(bytesd)/4)
 	c := 0
 	for i := 0; i < len(bytesd); i += 4 {
@@ -139,15 +145,13 @@ func deserialize(bytesd []byte) ([]uint32) {
 
 //Get the f5'd blocks into the thing
 func blockarize(quantized [][][]uint32, candidateblocks [][][]uint32, candidates []int) [][][]uint32 {
-	fmt.Println(quantized)
+
 	for i := 0; i < len(candidates);i++ {
 		currcan := candidates[i]
 		quantized[currcan] = candidateblocks[i]
 
 	}
-	fmt.Println(len(candidates))
-	//quantized[2470] = candidateblocks[1]
-	fmt.Println(quantized[2470][:3])
+	fmt.Println(candidates)
 	return quantized
 }
 func serialize(quantized [][][]uint32, dimensions BitmapDimensions) []byte {

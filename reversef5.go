@@ -9,7 +9,8 @@ func inversef5(coeffblock []uint32, command Command) ([]bool) {
 	}
 	messagebits := make([]bool, 0)
 
-	triplets, _ := triplets(command, coeffblock)
+	triplets,_ := triplets(command, coeffblock)
+
 	for i := 0; i < len(triplets); i += 3 {
 		currentTriplet := Triplet{triplets[i], triplets[i+1], triplets[i+2]}
 		//For each triplet take 2 textbits of the binarized message, defined as x1 and x2
@@ -45,7 +46,7 @@ func inversionF5Caller(command Command, deserialized []uint32, reconstructed [][
 	//candidateblocks := make([][][]uint32, 0)
 	message := make([]bool, 0)
 	size := (len(deserialized)/64) -1
-	for i := 0; i < 32 /int((command.tripletsnum * 2)); i++ {
+	for i := 0; i < 474*8 /int((command.tripletsnum * 2)); i++ {
 		x := rng(Span{0, size})
 		for j := 0; j < len(candidates);j++ {
 			if x == candidates[j] {
@@ -55,7 +56,8 @@ func inversionF5Caller(command Command, deserialized []uint32, reconstructed [][
 
 		}
 		candidates = append(candidates, x)
-		coeffs := flatten(reconstructed[x])
+		rec := reconstructed[x]
+		coeffs := flatten(rec)
 		message = append(message, inversef5(coeffs, command)...)
 
 	}
