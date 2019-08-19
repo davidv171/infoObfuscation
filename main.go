@@ -103,7 +103,7 @@ func main() {
 		extr := string(extracted)
 		fmt.Println("Message:", extr)
 		fmt.Println("Meta analysis: ")
-		inverseHaar(command,reconstructed,dim)
+		inverseHaar(command,deserialized,dim)
 
 	}
 }
