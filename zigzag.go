@@ -89,9 +89,9 @@ func quantize(thr uint64, zigzagged [][]float32) ([][]uint32) {
 		fmt.Println("Did not receive valid zigzag")
 		os.Exit(1)
 	}
-	quantized := make([][]uint32,8)
+	quantized := make([][]uint32, 8)
 	for i := range quantized {
-		quantized[i] = make([]uint32,8)
+		quantized[i] = make([]uint32, 8)
 	}
 	start := 64 - int(thr)
 	index := 0
@@ -99,7 +99,7 @@ func quantize(thr uint64, zigzagged [][]float32) ([][]uint32) {
 		for j := range zigzagged[0] {
 			if index > start {
 				quantized[i][j] = 0
-			}else {
+			} else {
 				quantized[i][j] = uint32(zigzagged[i][j])
 				index++
 
@@ -125,7 +125,6 @@ func reconstructfloat(result []float32) [][]float32 {
 	return reconstructed
 }
 
-
 //Reconstruct an 8x8 matrix out of 64 length 1D matrix
 func reconstructuint(result []uint32) [][]uint32 {
 	reconstructed := make([][]uint32, 8)
@@ -140,9 +139,10 @@ func reconstructuint(result []uint32) [][]uint32 {
 	}
 	return reconstructed
 }
+
 //turn 8x8 into 64 length 1D
 func flatten(input [][]uint32) []uint32 {
-	flattened := make([]uint32,64)
+	flattened := make([]uint32, 64)
 	counter := 0
 	for i := range input {
 		for j := range input[0] {
@@ -151,4 +151,79 @@ func flatten(input [][]uint32) []uint32 {
 		}
 	}
 	return flattened
+}
+
+func globalZigZag(block [][][]float32) []float32 {
+	//Resulting a NxN length 1D matrix from an 8x8 block
+	l := len(block)
+	result := make([]float32, l*64)
+	for z := 0; z < l; z++ {
+		i := 1
+		j := 0
+		iterator := 2 * l
+		result[z] = block[z][0][0]
+		result[z+l] = block[z][0][1]
+		//Last one is predetermined
+		result[(63*l)+z] = block[z][7][7]
+		firsthalf := true
+		for iterator+z < 64*l {
+			if i == 8 && j == 0 {
+				i = 7
+				j++
+				firsthalf = !firsthalf
+			} else if i == 8 && j == 7 {
+				i = 7
+			}
+			if firsthalf {
+				if j%2 != 0 || i%2 != 0 {
+					for j != 0 {
+						result[iterator+z] = block[z][i][j]
+						iterator += l
+						i++
+						j--
+					}
+					result[iterator+z] = block[z][i][j]
+					iterator += l
+					i++
+				} else if i%2 == 0 {
+					for i != 0 {
+						result[iterator+z] = block[z][i][j]
+						iterator += l
+						i--
+						j++
+
+					}
+					result[iterator+z] = block[z][i][j]
+					iterator += l
+					j++
+				}
+				//Second half of the matrix
+			} else {
+				if j%2 != 0 && i == 7 {
+					//Go up the matrix until you reach the inverse(from 5,0 -> 0,5)
+					for j != 7 {
+						result[iterator+z] = block[z][i][j]
+						iterator += l
+						i--
+						j++
+
+					}
+					result[iterator+z] = block[z][i][j]
+					iterator += l
+					i++
+				} else if i%2 == 0 {
+					for i != 7 {
+						result[iterator+z] = block[z][i][j]
+						iterator += l
+						j--
+						i++
+					}
+					result[iterator+z] = block[z][i][j]
+					iterator += l
+					j++
+				}
+			}
+		}
+	}
+	return result
 }

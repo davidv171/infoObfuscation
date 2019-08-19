@@ -102,6 +102,8 @@ func main() {
 		filew(command.message, extracted)
 		extr := string(extracted)
 		fmt.Println("Message:", extr)
+		fmt.Println("Meta analysis: ")
+		inverseHaar(command,reconstructed,dim)
 
 	}
 }
@@ -123,6 +125,20 @@ func reconstruct3D(deserialized []uint32) [][][]uint32 {
 	reconstructed := make([][][]uint32, 0)
 	for i := 0; i < len(deserialized)-64; i += 64 {
 		recon := reconstructuint(deserialized[i : i+64])
+		if recon == nil {
+			fmt.Println("Unable to deserialize file")
+			os.Exit(1)
+		}
+		reconstructed = append(reconstructed, recon)
+
+	}
+	return reconstructed
+}
+
+func reconstruct3DFloat(deserialized []float32) [][][]float32 {
+	reconstructed := make([][][]float32, 0)
+	for i := 0; i < len(deserialized)-64; i += 64 {
+		recon := reconstructfloat(deserialized[i : i+64])
 		if recon == nil {
 			fmt.Println("Unable to deserialize file")
 			os.Exit(1)
@@ -157,6 +173,7 @@ func blockarize(quantized [][][]uint32, candidateblocks [][][]uint32, candidates
 func serialize(quantized [][][]uint32, dimensions BitmapDimensions) []byte {
 	serialized := make([]byte, 0)
 	//Encode the dimensions NxN at the start
+
 	b := (*[4]byte)(unsafe.Pointer(&dimensions.x))[:]
 	serialized = append(serialized, b...)
 	for i := 0; i < len(quantized); i++ {

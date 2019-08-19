@@ -52,10 +52,8 @@ func eightxeight(pixels [][]float32) [][][]float32 {
 		//Normalize each colmn of the starting matrix to length 1
 	}
 	//Zig zag the blocks
-	for i := range blocks {
-		blocks[i] = blockzigzag(blocks[i])
-	}
-	return blocks
+	zig := globalZigZag(blocks)
+	return reconstruct3DFloat(zig)
 }
 
 func createBlocks(x int, y int) [][][][]float32 {
