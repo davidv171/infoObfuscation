@@ -3,8 +3,6 @@ package main
 import (
 	"encoding/binary"
 	"fmt"
-	"image"
-	"image/color"
 	"math/rand"
 	"os"
 	"unsafe"
@@ -28,10 +26,6 @@ kjer:
 */
 //Bitmap stuff, x,y -> dimensions
 
-type Bitmap struct {
-	model color.Model
-	x, y  image.Rectangle
-}
 type BitmapDimensions struct {
 	x, y int
 }
@@ -46,6 +40,8 @@ func main() {
 	if command.option == "h" {
 
 		pixels, bitmapdim := bitmapr(command.bmp)
+
+		fmt.Println("First pixel row", pixels[0])
 
 		text := textr(command.message)
 
@@ -65,7 +61,7 @@ func main() {
 		wc := 0
 
 		for i := 0; i < len(textbits)/int((command.tripletsnum * 2)); i++ {
-			x := generaterng(candidates,len(quantized))
+			x := generaterng(candidates, len(quantized))
 
 			candidates = append(candidates, x)
 			words := textbits[wc : wc+int(command.tripletsnum*2)]
@@ -103,18 +99,18 @@ func main() {
 		extr := string(extracted)
 		fmt.Println("Message:", extr)
 		fmt.Println("Meta analysis: ")
-		inverseHaar(command,deserialized,dim)
+		inverseHaar(command, deserialized, dim)
 
 	}
 }
 
-func generaterng(candidates []int,end int) int {
+func generaterng(candidates []int, end int) int {
 	x := rng(Span{0, end - 1})
 	//Check if it's already generated
-	for j := 0; j < len(candidates);j++ {
+	for j := 0; j < len(candidates); j++ {
 		if x == candidates[j] {
 
-			x = rng(Span{0, end-1})
+			x = rng(Span{0, end - 1})
 			j = -1
 		}
 	}
@@ -162,7 +158,7 @@ func deserialize(bytesd []byte) []uint32 {
 //Get the f5'd blocks into the thing
 func blockarize(quantized [][][]uint32, candidateblocks [][][]uint32, candidates []int) [][][]uint32 {
 
-	for i := 0; i < len(candidates);i++ {
+	for i := 0; i < len(candidates); i++ {
 		currcan := candidates[i]
 		quantized[currcan] = candidateblocks[i]
 
@@ -187,6 +183,32 @@ func serialize(quantized [][][]uint32, dimensions BitmapDimensions) []byte {
 	}
 
 	return serialized
+}
+
+/*2D matrix of 8x8 blocks for easier serializing*/
+func construct4D(monstrosity [][][]uint32) [][][][]uint32 {
+	b := make([][][][]uint32, 64)
+	for i := range b {
+		b[i] = make([][][]uint32, 64)
+		for j := range b[i] {
+			b[i][j] = make([][]uint32, 8)
+			for k := range b[i][j] {
+				b[i][j][k] = make([]uint32, 8)
+			}
+		}
+	}
+	c := 0
+	for i := range monstrosity {
+		if i != 0 && i%64 == 0 {
+			b[c] = monstrosity[i : i+64]
+			fmt.Println(c, i)
+
+			c++
+		}
+	}
+	fmt.Println(b)
+
+	return b
 }
 
 /*

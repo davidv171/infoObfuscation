@@ -1,15 +1,91 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
+
+/*Transpose 8x8 matrix*/
+func transpose(blawk [][]uint32) [][]uint32 {
+	transposed := make([][]uint32, 8)
+	for i := range transposed {
+		transposed[i] = make([]uint32, 8)
+	}
+	for i := range blawk {
+		for j := range blawk[i] {
+			transposed[i][j] = blawk[j][i]
+		}
+	}
+	return transposed
+}
 
 func inverseHaar(command Command, deserialized []uint32, dim uint32) {
 
 	/*first uint32 is the dimension of the image, 2^n*/
 	/*1. Reverse global zig zag
 	2. On each block : frequency to time
+		//Reverse haar on columns
+	//Reverse haar on rows
+	///Reverse Haar = Transpose the received block if normalized
 	*/
 	reversed := reverseglobalzig(deserialized)
-	fmt.Println(reversed)
+
+	invhaar := make([][][]uint32, len(reversed))
+	for i := range reversed {
+		invhaar[i] = transpose(reversed[i])
+	}
+	fmt.Println("Reversed first pixel", invhaar[0][0])
+	//Rebuild the matrix ready for bitmap
+	matrix := make([][]uint32, 512)
+	for i := range matrix {
+		matrix[i] = make([]uint32, 512)
+	}
+	fourd := construct4D(invhaar)
+	serialize4d := serialize4d(fourd)
+	fmt.Println(serialize4d)
+
+}
+
+func serialize4d(fourd [][][][]uint32) [][]uint32 {
+	x, y := 512, 512
+	d := make([][]uint32, x)
+	for i := range d {
+		d[i] = make([]uint32, y)
+	}
+	cnt := 0
+	j := 0
+	i := 0
+	c := 0
+	f := 0
+	for z := 0; z < len(fourd[0]); z++ {
+		fmt.Println("[", f, ",", z+(cnt*8), "] -> [", c, "][", j, "][", i, "][", z, "]")
+		d[f][z+(cnt*8)] = fourd[c][j][i][z]
+		//End of the row, go to the right neighbour block, take the ith row there
+		if z == 7 {
+			z = -1
+			j++
+			cnt++
+
+		}
+		//Reached the end of the rows, restart algorithm a column down
+		if j == len(fourd[c]) {
+			j = 0
+			z = -1
+			i++
+			cnt = 0
+			f++
+
+		}
+		//Reached the last corner of the array of blocks, restart on the array of blocks a column down
+		if i == 8 {
+			z = -1
+			j = 0
+			i = 0
+			c++
+
+		}
+
+	}
+	return d
 
 }
 

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"golang.org/x/image/bmp"
 	"image"
+	"image/color"
+	"log"
 	"os"
 )
 
@@ -30,7 +32,6 @@ func bitmapr(path string) ([][]float32, BitmapDimensions) {
 bmpfr reads the pixels from the decoded bitmap into a 2D array
 */
 func bmpfr(btmp image.Image) ([][]float32) {
-
 	x := btmp.Bounds().Size().X
 	y := btmp.Bounds().Size().Y
 	pixels := make([][]float32, x)
@@ -82,4 +83,25 @@ func filer(path string) ([]byte) {
 	fmt.Println("Input size", s)
 	f.Close()
 	return p
+}
+
+func btmpfw(matrix [][]byte, path string) {
+	height, width := 512, 512
+	img := image.NewGray(image.Rect(0, 0, width, height))
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			img.Set(x, y, color.Gray{
+				Y: matrix[y][x],
+			})
+		}
+	}
+	f, err := os.Create("ojej.bmp")
+	defer f.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err != bmp.Encode(f, img) {
+		log.Fatal("Coulnd't write file")
+	}
+
 }
