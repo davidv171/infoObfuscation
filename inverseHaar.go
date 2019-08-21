@@ -1,18 +1,6 @@
 package main
 
 /*Transpose 8x8 matrix*/
-func transpose(blawk [][]uint32) [][]uint32 {
-	transposed := make([][]uint32, 8)
-	for i := range transposed {
-		transposed[i] = make([]uint32, 8)
-	}
-	for i := range blawk {
-		for j := range blawk[i] {
-			transposed[i][j] = blawk[j][i]
-		}
-	}
-	return transposed
-}
 
 func inverseHaar(command Command, deserialized []uint32, dim uint32) {
 
@@ -26,7 +14,7 @@ func inverseHaar(command Command, deserialized []uint32, dim uint32) {
 	reversed := reverseglobalzig(deserialized)
 	invhaar := make([][][]uint32, len(reversed))
 	for i := range reversed {
-		invhaar[i] = transpose(reversed[i])
+		invhaar[i] = reversed[i]
 	}
 	//Rebuild the matrix ready for bitmap
 	matrix := make([][]uint32, dim)
