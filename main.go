@@ -70,25 +70,22 @@ func main() {
 			wc += int(command.tripletsnum * 2)
 
 		}
-
 		stegblocks := blockarize(quantized, candidateblocks, candidates)
+
 
 		filew("bitmaps/output", serialize(stegblocks, bitmapdim))
 	} else {
 
-		fmt.Println("Decoding", command.bmp)
-
 		readb := filer(command.bmp)
-
+		fmt.Println("BBYTES", len(readb))
 		deserialized := deserialize(readb)
 		dim := deserialized[0]
-		fmt.Println("Dimension of coefficients", dim)
-
 		//Cut out the dimensions
+		fmt.Println(len(deserialized))
 		deserialized = deserialized[1:]
-
+		fmt.Println(len(deserialized))
 		reconstructed := reconstruct3D(deserialized)
-
+		fmt.Println(len(reconstructed))
 		message := inversionF5Caller(command, deserialized, reconstructed)
 		extracted := make([]byte, 0)
 		for i := 0; i < len(message); i += 8 {
@@ -105,8 +102,10 @@ func main() {
 }
 
 func generaterng(candidates []int, end int) int {
+
 	x := rng(Span{0, end - 1})
 	//Check if it's already generated
+
 	for j := 0; j < len(candidates); j++ {
 		if x == candidates[j] {
 
@@ -118,14 +117,16 @@ func generaterng(candidates []int, end int) int {
 }
 
 func reconstruct3D(deserialized []uint32) [][][]uint32 {
-	reconstructed := make([][][]uint32, 0)
-	for i := 0; i < len(deserialized)-64; i += 64 {
+	reconstructed := make([][][]uint32, len(deserialized)/64)
+	c := 0
+	for i := 0; c < len(reconstructed); i += 64 {
 		recon := reconstructuint(deserialized[i : i+64])
 		if recon == nil {
 			fmt.Println("Unable to deserialize file")
 			os.Exit(1)
 		}
-		reconstructed = append(reconstructed, recon)
+		reconstructed[c] = recon
+		c++
 
 	}
 	return reconstructed
@@ -163,13 +164,12 @@ func blockarize(quantized [][][]uint32, candidateblocks [][][]uint32, candidates
 		quantized[currcan] = candidateblocks[i]
 
 	}
-	fmt.Println(candidates)
 	return quantized
 }
 func serialize(quantized [][][]uint32, dimensions BitmapDimensions) []byte {
 	serialized := make([]byte, 0)
+	fmt.Println("XD", len(quantized), len(quantized[0]), len(quantized[0][0]))
 	//Encode the dimensions NxN at the start
-
 	b := (*[4]byte)(unsafe.Pointer(&dimensions.x))[:]
 	serialized = append(serialized, b...)
 	for i := 0; i < len(quantized); i++ {
@@ -181,7 +181,7 @@ func serialize(quantized [][][]uint32, dimensions BitmapDimensions) []byte {
 			}
 		}
 	}
-
+	fmt.Println("SS" , len(serialized))
 	return serialized
 }
 
@@ -201,14 +201,28 @@ func construct4D(monstrosity [][][]uint32) [][][][]uint32 {
 	for i := range monstrosity {
 		if i != 0 && i%64 == 0 {
 			b[c] = monstrosity[i : i+64]
-			fmt.Println(c, i)
-
 			c++
 		}
 	}
 	fmt.Println(b)
 
 	return b
+}
+
+func uint32tobyteslice(slice []uint32) ([]byte) {
+	//We're assuming the numbers don't pass 255, which they don't because pixels
+	f := make([]byte, len(slice))
+	for i := range slice {
+		f[i] = byte(slice[i])
+	}
+	return f
+}
+func uint32FromByteSlice(slice []byte) ([]uint32) {
+	f := make([]uint32, len(slice))
+	for i := range slice {
+		f[i] = uint32(slice[i])
+	}
+	return f
 }
 
 /*

@@ -1,9 +1,5 @@
 package main
 
-import (
-	"fmt"
-)
-
 /*Transpose 8x8 matrix*/
 func transpose(blawk [][]uint32) [][]uint32 {
 	transposed := make([][]uint32, 8)
@@ -28,23 +24,35 @@ func inverseHaar(command Command, deserialized []uint32, dim uint32) {
 	///Reverse Haar = Transpose the received block if normalized
 	*/
 	reversed := reverseglobalzig(deserialized)
-
 	invhaar := make([][][]uint32, len(reversed))
 	for i := range reversed {
 		invhaar[i] = transpose(reversed[i])
 	}
-	fmt.Println("Reversed first pixel", invhaar[0][0])
 	//Rebuild the matrix ready for bitmap
-	matrix := make([][]uint32, 512)
+	matrix := make([][]uint32, dim)
 	for i := range matrix {
-		matrix[i] = make([]uint32, 512)
+		matrix[i] = make([]uint32, dim)
 	}
 	fourd := construct4D(invhaar)
-	serialize4d := serialize4d(fourd)
-	fmt.Println(serialize4d)
+	serialized := serialize4d(fourd)
+
+	s := turnToBytes(serialized)
+	btmpfw(s, "output.bmp")
 
 }
 
+func turnToBytes(serialized [][]uint32) [][]byte {
+	s := make([][]byte, 512)
+	for i := range s {
+		s[i] = make([]byte, 512)
+	}
+	for i := range serialized {
+		for j := range serialized[i] {
+			s[i][j] = byte(serialized[i][j])
+		}
+	}
+	return s
+}
 func serialize4d(fourd [][][][]uint32) [][]uint32 {
 	x, y := 512, 512
 	d := make([][]uint32, x)
@@ -57,7 +65,7 @@ func serialize4d(fourd [][][][]uint32) [][]uint32 {
 	c := 0
 	f := 0
 	for z := 0; z < len(fourd[0]); z++ {
-		fmt.Println("[", f, ",", z+(cnt*8), "] -> [", c, "][", j, "][", i, "][", z, "]")
+		//fmt.Println("[", f, ",", z+(cnt*8), "] -> [", c, "][", j, "][", i, "][", z, "]")
 		d[f][z+(cnt*8)] = fourd[c][j][i][z]
 		//End of the row, go to the right neighbour block, take the ith row there
 		if z == 7 {
@@ -82,6 +90,9 @@ func serialize4d(fourd [][][][]uint32) [][]uint32 {
 			i = 0
 			c++
 
+		}
+		if (f == 512) {
+			break
 		}
 
 	}

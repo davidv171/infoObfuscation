@@ -35,7 +35,6 @@ func bmpfr(btmp image.Image) ([][]float32) {
 	x := btmp.Bounds().Size().X
 	y := btmp.Bounds().Size().Y
 	pixels := make([][]float32, x)
-	fmt.Println("Bitmap dimensions, x: ", x, " y: ", y)
 	for i := 0; i < x; i++ {
 		pixels[i] = make([]float32, y)
 		for j := 0; j < y; j++ {
@@ -61,7 +60,7 @@ func filew(path string, bytes []byte) {
 	}
 	defer f.Sync()
 
-	fmt.Println("Written", size, "bytes")
+	fmt.Println("Written", size, "bytes to", path)
 
 }
 
@@ -91,11 +90,11 @@ func btmpfw(matrix [][]byte, path string) {
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			img.Set(x, y, color.Gray{
-				Y: matrix[y][x],
+				Y: matrix[x][y],
 			})
 		}
 	}
-	f, err := os.Create("ojej.bmp")
+	f, err := os.Create("testForMeta.bmp")
 	defer f.Close()
 	if err != nil {
 		log.Fatal(err)
