@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"encoding/binary"
+	"fmt"
+)
 
 /*Receive 2D array of coefficients, perform inverse f5 on it, return reconstructed bits of the message*/
 func inversef5(coeffblock []uint32, command Command) ([]bool) {
@@ -44,11 +47,25 @@ func btou(b bool) {
 func inversionF5Caller(command Command, deserialized []uint32, reconstructed [][][]uint32) []bool {
 	candidates := make([]int, 0)
 	//candidateblocks := make([][][]uint32, 0)
+	length := make([]bool,0)
 	message := make([]bool, 0)
 
 	size := (len(deserialized) / 64)
 
-	for i := 0; i < 474*8/int((command.tripletsnum * 2)); i++ {
+	//Get message size
+	for i := 0; i < 32/int((command.tripletsnum * 2)); i++ {
+		x := generaterng(candidates,size)
+		candidates = append(candidates, x)
+		rec := reconstructed[x]
+		coeffs := flatten(rec)
+		length = append(length, inversef5(coeffs, command)...)
+
+	}
+
+	messageLength := uint32FromBits(length)
+
+
+	for i := 0; i < int(messageLength)*8/int((command.tripletsnum * 2)); i++ {
 		x := generaterng(candidates,size)
 		candidates = append(candidates, x)
 		rec := reconstructed[x]
@@ -57,4 +74,15 @@ func inversionF5Caller(command Command, deserialized []uint32, reconstructed [][
 
 	}
 	return message
+}
+func uint32FromBits(message []bool) uint32 {
+	extracted := make([]byte, 0)
+	for i := 0; i < len(message); i += 8 {
+		extracted = append(extracted, bitSliceToByte(message[i:i+8]))
+	}
+	return uint32FromBytes(extracted)
+}
+
+func uint32FromBytes(bytes []byte) uint32 {
+	return binary.LittleEndian.Uint32(bytes)
 }

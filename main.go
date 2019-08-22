@@ -41,9 +41,10 @@ func main() {
 
 		pixels, bitmapdim := bitmapr(command.bmp)
 
-		fmt.Println("First pixel row", pixels[0])
-
 		text := textr(command.message)
+		size := uint32(len(text))
+
+		text = append(byteSliceFromUint32(size), text...)
 
 		textbits := text2bits(text)
 
@@ -72,39 +73,42 @@ func main() {
 		}
 		stegblocks := blockarize(quantized, candidateblocks, candidates)
 
-
 		filew("bitmaps/output", serialize(stegblocks, bitmapdim))
 	} else {
 
 		readb := filer(command.bmp)
-		fmt.Println("BBYTES", len(readb))
 		deserialized := deserialize(readb)
 		dim := deserialized[0]
 		//Cut out the dimensions
-		fmt.Println(len(deserialized))
 		deserialized = deserialized[1:]
-		fmt.Println(len(deserialized))
+
+
 		reconstructed := reconstruct3D(deserialized)
-		fmt.Println(len(reconstructed))
+
 		message := inversionF5Caller(command, deserialized, reconstructed)
 		extracted := make([]byte, 0)
 		for i := 0; i < len(message); i += 8 {
 			extracted = append(extracted, bitSliceToByte(message[i:i+8]))
 		}
 		fmt.Println(extracted)
+
 		filew(command.message, extracted)
+
 		extr := string(extracted)
+
 		fmt.Println("Message:", extr)
+
 		fmt.Println("Meta analysis: ")
+
 		inversed := inverseHaar(command, deserialized, dim)
 
 		//Do meta analysis
-		fmt.Println("THR" , command.thr, "M:" , command.tripletsnum)
-		originalPixels,_ := bitmapr("ojej.bmp")
+		fmt.Println("THR", command.thr, "M:", command.tripletsnum)
+		originalPixels, _ := bitmapr("ojej.bmp")
+
 		original := floatToInt(originalPixels)
-		fmt.Println("Original")
-		fmt.Println(original)
-		meta(original,inversed)
+
+		meta(original, inversed)
 
 	}
 }
@@ -176,7 +180,6 @@ func blockarize(quantized [][][]uint32, candidateblocks [][][]uint32, candidates
 }
 func serialize(quantized [][][]uint32, dimensions BitmapDimensions) []byte {
 	serialized := make([]byte, 0)
-	fmt.Println("XD", len(quantized), len(quantized[0]), len(quantized[0][0]))
 	//Encode the dimensions NxN at the start
 	b := (*[4]byte)(unsafe.Pointer(&dimensions.x))[:]
 	serialized = append(serialized, b...)
@@ -189,7 +192,6 @@ func serialize(quantized [][][]uint32, dimensions BitmapDimensions) []byte {
 			}
 		}
 	}
-	fmt.Println("SS" , len(serialized))
 	return serialized
 }
 
@@ -212,7 +214,6 @@ func construct4D(monstrosity [][][]uint32) [][][][]uint32 {
 			c++
 		}
 	}
-	fmt.Println(b)
 
 	return b
 }
@@ -231,6 +232,11 @@ func uint32FromByteSlice(slice []byte) ([]uint32) {
 		f[i] = uint32(slice[i])
 	}
 	return f
+}
+func byteSliceFromUint32(x uint32) []byte {
+	b := (*[4]byte)(unsafe.Pointer(&x))[:]
+	return b
+
 }
 
 /*
