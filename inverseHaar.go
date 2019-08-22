@@ -2,7 +2,7 @@ package main
 
 /*Transpose 8x8 matrix*/
 
-func inverseHaar(command Command, deserialized []uint32, dim uint32) {
+func inverseHaar(command Command, deserialized []uint32, dim uint32) ([][]uint32){
 
 	/*first uint32 is the dimension of the image, 2^n*/
 	/*1. Reverse global zig zag
@@ -26,6 +26,8 @@ func inverseHaar(command Command, deserialized []uint32, dim uint32) {
 
 	s := turnToBytes(serialized)
 	btmpfw(s, "output.bmp")
+
+	return serialized
 
 }
 

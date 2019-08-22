@@ -96,7 +96,15 @@ func main() {
 		extr := string(extracted)
 		fmt.Println("Message:", extr)
 		fmt.Println("Meta analysis: ")
-		inverseHaar(command, deserialized, dim)
+		inversed := inverseHaar(command, deserialized, dim)
+
+		//Do meta analysis
+		fmt.Println("THR" , command.thr, "M:" , command.tripletsnum)
+		originalPixels,_ := bitmapr("ojej.bmp")
+		original := floatToInt(originalPixels)
+		fmt.Println("Original, and inverse")
+		fmt.Println(inversed)
+		meta(original,inversed)
 
 	}
 }
@@ -185,7 +193,7 @@ func serialize(quantized [][][]uint32, dimensions BitmapDimensions) []byte {
 	return serialized
 }
 
-/*2D matrix of 8x8 blocks for easier serializing*/
+/*2D matrix of 8x8 blocks for easier serializing XDXDXDXDXDXDXDDXDXDXDXD*/
 func construct4D(monstrosity [][][]uint32) [][][][]uint32 {
 	b := make([][][][]uint32, 64)
 	for i := range b {
