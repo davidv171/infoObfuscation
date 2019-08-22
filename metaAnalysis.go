@@ -69,7 +69,7 @@ func shannon (f [][]int32) float32{
 }
 
 func probtable (f [][]int32) []float32{
-	pt := make([]float32,255)
+	pt := make([]float32,256)
 	for i := range f {
 		for j := range f[i] {
 			pt[f[i][j]]++

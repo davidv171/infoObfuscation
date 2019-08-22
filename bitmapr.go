@@ -41,6 +41,7 @@ func bmpfr(btmp image.Image) ([][]float32) {
 			pix, _, _, _ := btmp.At(i, j).RGBA()
 			//we're dealing with n bit depth gray pixel, the library always does 0-65635
 			pix = pix >> 8
+
 			pixels[i][j] = float32(pix)
 		}
 	}

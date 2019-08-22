@@ -102,8 +102,8 @@ func main() {
 		fmt.Println("THR" , command.thr, "M:" , command.tripletsnum)
 		originalPixels,_ := bitmapr("ojej.bmp")
 		original := floatToInt(originalPixels)
-		fmt.Println("Original, and inverse")
-		fmt.Println(inversed)
+		fmt.Println("Original")
+		fmt.Println(original)
 		meta(original,inversed)
 
 	}
