@@ -58,18 +58,21 @@
 %-----------------------------------------------------------------------------------------
 \clearpage % moves to the next page
 \pagenumbering{arabic}
+
 \section{PSNR} % The start of a new section
-\begin{table}
+
+\begin{table}[H]
     \begin{tabular}{llll}
     M     & THR & PSNR[dB] \\ \hline
     1  & 1               &  59.23974514002651               \\
     20 & 3               & 29.484904080413305                    \\
     40     & 5             & 26.185923576403866                       \\
-    //
     \end{tabular}
 \end{table}
+
 \section{Shannonova entropija}
-\begin{table}
+
+\begin{table}[H]
     \begin{tabular}{llll}
     M     & THR & Original[bits] & Steganografirana[bits] \\ \hline
     1  & 1               &  3.6779538e+09     & 3.6774175e+09           \\
@@ -77,8 +80,10 @@
     40     & 5             & 3.6779538e+09        &   5.4319037e+09            \\
     \end{tabular}
 \end{table}
+
 \section{Blokovnost}
-\begin{table}
+
+\begin{table}[H]
     \begin{tabular}{llll}
     M     & THR & Original & Steganografirana \\ \hline
     1  & 1               &  10368     & 10398           \\
@@ -86,7 +91,10 @@
     40     & 5             & 10368        &   4502            \\
     \end{tabular}
 \end{table}
+
 \clearpage % moves to the next page
+
 \section{Intenziteta pikslov - 0 odstranjena iz histograma}
+
 \includegraphics{RPlot003.png}
 \end{document}
